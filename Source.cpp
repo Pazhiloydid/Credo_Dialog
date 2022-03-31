@@ -25,12 +25,8 @@ std::string readFile(const string& fileName) {
     return ss.str();
 }
 
-int main()
-{
+list<std::pair<COMMENT_TYPE, size_t>> getCommentSymbols(const string& fileData) {
     list<std::pair<COMMENT_TYPE, size_t>> comments;
-    std::ofstream out("out.cpp");
-    string fileData = readFile("in.cpp");
-    //string_view dataView(fileData);
     for (size_t index = 0; index < fileData.size() - 1;) {
         if (fileData[index] == '/') {
             if (fileData[index + 1] == '/') {
@@ -44,7 +40,7 @@ int main()
             else
                 index++;
         }
-        else if (fileData[index] == '*'){
+        else if (fileData[index] == '*') {
             if (fileData[index + 1] == '/') {
                 comments.emplace_back(COMMENT_TYPE::MULTI_CLOSE, index);
                 index += 2;
@@ -60,6 +56,11 @@ int main()
             index++;
         }
     }
+    return comments;
+}
+
+std::string deleteComments(const string& fileData) {
+    list<std::pair<COMMENT_TYPE, size_t>> comments = getCommentSymbols(fileData);
     string result;
     size_t current_index = 0;
     while (comments.size()) {
@@ -77,13 +78,25 @@ int main()
             while (comments.front().first != COMMENT_TYPE::MULTI_CLOSE) {
                 comments.pop_front();
             }
-            current_index = comments.front().second + 3;
+            //case int/**/main()
+            if (delPosStart + 2 == comments.front().second)
+                result += ' ';
+            current_index = comments.front().second + 2;
         }
         else {
             comments.pop_front();
         }
     }
-    result += fileData.substr(current_index,fileData.size() - current_index);
+    result += fileData.substr(current_index, fileData.size() - current_index);
+    return result;
+}
+
+int main()
+{
+    std::ofstream out("out.cpp");
+    string fileData = readFile("test1in.cpp");
+    string result = deleteComments(fileData);
+    //string_view dataView(fileData);
     out << result;
     return 0;
 }
